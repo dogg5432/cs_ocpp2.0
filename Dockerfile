@@ -1,32 +1,29 @@
 # Stage 1: Build the Go binary
 FROM golang:1.22.2 AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy go.mod and go.sum files to cache dependencies
 COPY go.mod go.sum ./
-
-# Download Go module dependencies
 RUN go mod download
 
-# Copy the entire Go project into the container
 COPY . .
 
-# Build the Go binary
-RUN go build -o main .
+# Build the Go binary as a static executable
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main .
 
-# Stage 2: Create a minimal final image with just the Go binary
-FROM debian:bullseye-slim
+# Stage 2: Use a minimal image like Alpine since the binary is statically linked
+FROM alpine:latest
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the Go binary from the builder stage
+# Copy the config.json file
+COPY config.json .
+
 COPY --from=builder /app/main .
 
-# Expose port 8080 (or whatever port your app uses)
-EXPOSE 8081
+# Ensure the binary is executable
+RUN chmod +x ./main
 
-# Run the Go binary
+EXPOSE 8080
+
 CMD ["./main"]
