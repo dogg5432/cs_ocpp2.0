@@ -24,6 +24,6 @@ COPY --from=builder /app/main .
 # Ensure the binary is executable
 RUN chmod +x ./main
 
-EXPOSE 8080
+EXPOSE 8081
 
 CMD ["./main"]
