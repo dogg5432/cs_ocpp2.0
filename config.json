@@ -1,0 +1,11 @@
+{
+    "server":{
+        "port":"8081",
+        "path":"/ocpp20",
+        "heartbeat_interval":300
+    },
+    "database":{
+        "uri":"mongodb://ocpp_admin:Example123@127.0.0.1:27017/admin?retryWrites=true&loadBalanced=false&connectTimeoutMS=10000&authSource=admin&authMechanism=SCRAM-SHA-1",
+        "database_name":"central_system"
+    }
+}
