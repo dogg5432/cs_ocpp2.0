@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/dogg5432/cs_ocpp2.0/utils"
+	"github.com/dogg5432/cs_ocpp2.0/util"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/authorization"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/availability"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/data"
@@ -27,7 +27,7 @@ type DataSample struct {
 
 const defaultHeartbeatInterval = 300
 
-var logDefault = utils.LogDefault
+var logDefault = util.LogDefault
 
 func (c *CSMSHandler) OnAuthorize(chargingStationID string, request *authorization.AuthorizeRequest) (response *authorization.AuthorizeResponse, err error) {
 	logDefault(chargingStationID, request.GetFeatureName()).Infof("client with token %v authorized", request.IdToken)

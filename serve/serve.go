@@ -3,12 +3,12 @@ package serve
 import (
 	"github.com/dogg5432/cs_ocpp2.0/handler"
 	"github.com/dogg5432/cs_ocpp2.0/config"
-	"github.com/dogg5432/cs_ocpp2.0/utils"
+	"github.com/dogg5432/cs_ocpp2.0/util"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1"
 	"github.com/lorenzodonini/ocpp-go/ocppj"
 )
 
-var log  = utils.Log
+var log  = util.Log
 
 func Run() {
 	configApp := config.ConfigApp.Server
