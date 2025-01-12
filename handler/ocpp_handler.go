@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"github.com/dogg5432/cs_ocpp2.0/model"
+	"github.com/dogg5432/cs_ocpp2.0/repository"
 	"github.com/dogg5432/cs_ocpp2.0/util"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/authorization"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/availability"
@@ -42,13 +44,11 @@ func (c *CSMSHandler) OnHeartbeat(chargingStationID string, request *availabilit
 }
 
 func (c *CSMSHandler) OnStatusNotification(chargingStationID string, request *availability.StatusNotificationRequest) (response *availability.StatusNotificationResponse, err error) {
-	info, ok := c.ChargingStations[chargingStationID]
+	_, ok := c.ChargingStations[chargingStationID]
 	if !ok {
 		return nil, fmt.Errorf("unknown charging station %v", chargingStationID)
 	}
 	if request.ConnectorID > 0 {
-		connectorInfo := info.getConnector(request.ConnectorID)
-		connectorInfo.status = request.ConnectorStatus
 		logDefault(chargingStationID, request.GetFeatureName()).Infof("connector %v updated status to %v", request.ConnectorID, request.ConnectorStatus)
 	} else {
 		logDefault(chargingStationID, request.GetFeatureName()).Infof("couldn't update status for invalid connector %v", request.ConnectorID)
@@ -143,6 +143,17 @@ func (c *CSMSHandler) OnMeterValues(chargingStationID string, request *meter.Met
 func (c *CSMSHandler) OnBootNotification(chargingStationID string, request *provisioning.BootNotificationRequest) (response *provisioning.BootNotificationResponse, err error) {
 	logDefault(chargingStationID, request.GetFeatureName()).Infof("boot confirmed for %v %v, serial: %v, firmare version: %v, reason: %v",
 		request.ChargingStation.VendorName, request.ChargingStation.Model, request.ChargingStation.SerialNumber, request.ChargingStation.FirmwareVersion, request.Reason)
+	var chargePointModel = model.Charger{
+		ChargePointID:   chargingStationID,
+		VendorName:      request.ChargingStation.VendorName,
+		Model:           request.ChargingStation.Model,
+		FirmwareVersion: request.ChargingStation.FirmwareVersion,
+		SerialNumber:    request.ChargingStation.SerialNumber,
+	}
+	var chargerRepository = repository.NewChagersRepository()
+	if err = chargerRepository.Create(&chargePointModel); err != nil {
+		return provisioning.NewBootNotificationResponse(types.NewDateTime(time.Now()), defaultHeartbeatInterval, provisioning.RegistrationStatusRejected), err
+	}
 	response = provisioning.NewBootNotificationResponse(types.NewDateTime(time.Now()), defaultHeartbeatInterval, provisioning.RegistrationStatusAccepted)
 	return
 }
