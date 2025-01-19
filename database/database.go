@@ -24,6 +24,5 @@ func Connect() error {
 	}
 	fmt.Println("Connected to MongoDB!")
 	Client = client.Database("central_system")
-
 	return nil
 }

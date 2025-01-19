@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"log"
 
 	"github.com/dogg5432/cs_ocpp2.0/database"
 	"github.com/dogg5432/cs_ocpp2.0/model"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -28,7 +30,10 @@ func (c chargerRepository) Create(charger *model.Charger) error {
 
 func (c chargerRepository) FindOne(chargerID string) (model.Charger, error) {
 	var charger model.Charger
-	err := c.collection.FindOne(context.TODO(), model.Charger{ChargeStationID: chargerID}).Decode(&charger)
+	filter := bson.M{"chargeStationID": chargerID}
+	result := c.collection.FindOne(context.TODO(), filter)
+	err := result.Decode(&charger)
+	log.Print(filter)
 	if err != nil {
 		return model.Charger{}, err
 	}

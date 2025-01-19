@@ -47,11 +47,11 @@ func (c *CSMSHandler) OnStatusNotification(chargingStationID string, request *av
 	chargerRepository := repository.NewChagersRepository()
 	charger, err := chargerRepository.FindOne(chargingStationID)
 	if (err != nil || charger == model.Charger{}) {
-		logDefault(chargingStationID, request.GetFeatureName()).Errorf("charger not found: %v", err)
+		logDefault(chargingStationID, request.GetFeatureName()).Errorf("charger with id %v not found: %v", chargingStationID, err)
 		return availability.NewStatusNotificationResponse(), err
 	}
 	connectorModel := model.Connector{
-		ChargerID: charger.ChargeStationID,
+		ChargerID:   charger.ChargeStationID,
 		ConnectorID: request.ConnectorID,
 	}
 	connectorRepository := repository.NewConnectorsRepository()
@@ -158,9 +158,16 @@ func (c *CSMSHandler) OnBootNotification(chargingStationID string, request *prov
 		SerialNumber:    request.ChargingStation.SerialNumber,
 	}
 	var chargerRepository = repository.NewChagersRepository()
-	if err = chargerRepository.Create(&chargePointModel); err != nil {
-		return provisioning.NewBootNotificationResponse(types.NewDateTime(time.Now()), defaultHeartbeatInterval, provisioning.RegistrationStatusRejected), err
+	_, err = chargerRepository.FindOne(chargingStationID)
+	if err == nil {
+		logDefault(chargingStationID, request.GetFeatureName()).Errorf("charger with id %v already exists: %v", chargingStationID, err)
+		return provisioning.NewBootNotificationResponse(types.NewDateTime(time.Now()), defaultHeartbeatInterval, provisioning.RegistrationStatusAccepted), nil
+	}else{
+		if err = chargerRepository.Create(&chargePointModel); err != nil {
+			return provisioning.NewBootNotificationResponse(types.NewDateTime(time.Now()), defaultHeartbeatInterval, provisioning.RegistrationStatusRejected), err
+		}
 	}
+	
 	response = provisioning.NewBootNotificationResponse(types.NewDateTime(time.Now()), defaultHeartbeatInterval, provisioning.RegistrationStatusAccepted)
 	return
 }
