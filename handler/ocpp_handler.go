@@ -44,14 +44,21 @@ func (c *CSMSHandler) OnHeartbeat(chargingStationID string, request *availabilit
 }
 
 func (c *CSMSHandler) OnStatusNotification(chargingStationID string, request *availability.StatusNotificationRequest) (response *availability.StatusNotificationResponse, err error) {
-	_, ok := c.ChargingStations[chargingStationID]
-	if !ok {
-		return nil, fmt.Errorf("unknown charging station %v", chargingStationID)
+	chargerRepository := repository.NewChagersRepository()
+	charger, err := chargerRepository.FindOne(chargingStationID)
+	if (err != nil || charger == model.Charger{}) {
+		logDefault(chargingStationID, request.GetFeatureName()).Errorf("charger not found: %v", err)
+		return availability.NewStatusNotificationResponse(), err
 	}
-	if request.ConnectorID > 0 {
-		logDefault(chargingStationID, request.GetFeatureName()).Infof("connector %v updated status to %v", request.ConnectorID, request.ConnectorStatus)
-	} else {
-		logDefault(chargingStationID, request.GetFeatureName()).Infof("couldn't update status for invalid connector %v", request.ConnectorID)
+	connectorModel := model.Connector{
+		ChargerID: charger.ChargeStationID,
+		ConnectorID: request.ConnectorID,
+	}
+	connectorRepository := repository.NewConnectorsRepository()
+	err = connectorRepository.InsertOrUpdate(&connectorModel)
+	if err != nil {
+		logDefault(chargingStationID, request.GetFeatureName()).Errorf("failed to insert connector: %v", err)
+		return availability.NewStatusNotificationResponse(), err
 	}
 	response = availability.NewStatusNotificationResponse()
 	return
@@ -144,7 +151,7 @@ func (c *CSMSHandler) OnBootNotification(chargingStationID string, request *prov
 	logDefault(chargingStationID, request.GetFeatureName()).Infof("boot confirmed for %v %v, serial: %v, firmare version: %v, reason: %v",
 		request.ChargingStation.VendorName, request.ChargingStation.Model, request.ChargingStation.SerialNumber, request.ChargingStation.FirmwareVersion, request.Reason)
 	var chargePointModel = model.Charger{
-		ChargePointID:   chargingStationID,
+		ChargeStationID: chargingStationID,
 		VendorName:      request.ChargingStation.VendorName,
 		Model:           request.ChargingStation.Model,
 		FirmwareVersion: request.ChargingStation.FirmwareVersion,

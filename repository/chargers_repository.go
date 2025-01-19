@@ -25,3 +25,13 @@ func (c chargerRepository) Create(charger *model.Charger) error {
 	}
 	return nil
 }
+
+func (c chargerRepository) FindOne(chargerID string) (model.Charger, error) {
+	var charger model.Charger
+	err := c.collection.FindOne(context.TODO(), model.Charger{ChargeStationID: chargerID}).Decode(&charger)
+	if err != nil {
+		return model.Charger{}, err
+	}
+	return charger, nil
+
+}
